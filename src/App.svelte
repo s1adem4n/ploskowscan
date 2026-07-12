@@ -102,7 +102,6 @@
     ></button>
     <div class:open={sidebarOpen} class="sidebar-wrap">
       <AppSidebar
-        addProject={() => (createProjectOpen = true)}
         addLevel={() => (createItemMode = 'level')}
         addArea={() => (createItemMode = 'area')}
         close={() => (sidebarOpen = false)}
@@ -124,22 +123,29 @@
             >
               {project.name}
             </button>{/each}
-          <button
-            class="icon-button"
-            onclick={() => (createProjectOpen = true)}
-            aria-label="Projekt hinzufügen"
-          >
-            <Icon name="plus" size={18} />
-          </button>
+          {#if appState.editing}<button
+              class="icon-button"
+              onclick={() => (createProjectOpen = true)}
+              aria-label="Projekt hinzufügen"
+            >
+              <Icon name="plus" size={18} />
+            </button>{/if}
         </div>
         <div class="topbar-actions">
           <button
-            class="button compact"
-            onclick={() => importInput?.click()}
-            disabled={busy}
+            class:active={appState.editing}
+            class="button compact edit-toggle"
+            onclick={() => (appState.editing = !appState.editing)}
           >
-            <Icon name="upload" size={17} /> Import
+            {appState.editing ? 'Bearbeiten beenden' : 'Bearbeiten'}
           </button>
+          {#if appState.editing}<button
+              class="button compact import-button"
+              onclick={() => importInput?.click()}
+              disabled={busy}
+            >
+              <Icon name="upload" size={17} /> Import
+            </button>{/if}
           <button
             class="button compact primary"
             onclick={handleExport}
@@ -148,13 +154,13 @@
             <Icon name="download" size={17} />
             {busy ? 'Bitte warten …' : 'Export'}
           </button>
-          <button
-            class="icon-button danger"
-            onclick={removeCurrentProject}
-            aria-label="Projekt löschen"
-          >
-            <Icon name="trash" size={18} />
-          </button>
+          {#if appState.editing}<button
+              class="icon-button danger"
+              onclick={removeCurrentProject}
+              aria-label="Projekt löschen"
+            >
+              <Icon name="trash" size={18} />
+            </button>{/if}
         </div>
         <input
           bind:this={importInput}

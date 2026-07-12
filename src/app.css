@@ -8,8 +8,9 @@
   --color-canvas: #f4f4f1;
   --color-accent: #20664d;
   --color-accent-hover: #174f3c;
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
 }
 
 :root {
@@ -59,6 +60,9 @@ select:focus-visible {
 }
 .button.compact {
   @apply min-h-9 px-3 py-1.5;
+}
+.edit-toggle.active {
+  @apply border-accent bg-[#eaf3ef] text-accent;
 }
 .button.danger-text {
   color: #a4332d;
@@ -259,6 +263,9 @@ select:focus-visible {
 .photo-title:hover {
   @apply bg-canvas;
 }
+.photo-title-static {
+  @apply mr-auto min-w-0 truncate p-1 text-sm font-semibold;
+}
 .empty-upload {
   @apply flex min-h-70 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#c9c9c4] bg-transparent p-8 text-center;
 }
@@ -327,15 +334,36 @@ input::placeholder {
 .editor-title strong {
   @apply truncate text-sm;
 }
-.editor-title span,
-.editor-hint {
+.editor-title span {
   @apply text-xs text-white/55;
+}
+.zoom-controls {
+  @apply flex items-center overflow-hidden rounded-lg border border-white/15;
+}
+.zoom-controls button {
+  @apply min-h-9 border-0 border-r border-white/15 bg-transparent px-3 text-sm font-semibold text-white;
+}
+.zoom-controls button:last-child {
+  @apply border-r-0;
+}
+.zoom-controls button:hover {
+  @apply bg-white/10;
+}
+.editor-edit-toggle {
+  @apply min-h-9 rounded-lg border border-white/20 bg-transparent px-3 text-sm font-semibold text-white;
+}
+.editor-edit-toggle:hover,
+.editor-edit-toggle.active {
+  @apply bg-white/10;
 }
 .editor-workspace {
   @apply flex min-h-0 flex-1;
 }
 .photo-stage {
-  @apply grid min-w-0 flex-1 place-items-center overflow-auto p-5;
+  @apply min-w-0 flex-1 overflow-hidden p-5;
+}
+.panzoom-viewport {
+  @apply grid size-full touch-none place-items-center overflow-hidden;
 }
 .photo-editor {
   @apply relative max-h-full w-fit max-w-full touch-none select-none;
@@ -404,6 +432,12 @@ input::placeholder {
 .measure-list {
   @apply mt-7 border-t border-white/10 pt-5;
 }
+.measure-list.view-only {
+  @apply mt-0 border-t-0 pt-0;
+}
+.no-measurements {
+  @apply text-sm text-white/50;
+}
 .measure-list h3 {
   @apply mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase;
 }
@@ -460,6 +494,9 @@ input::placeholder {
 .floorplan-empty {
   @apply min-h-90;
 }
+.empty-state {
+  @apply flex min-h-60 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line text-sm text-muted;
+}
 
 .welcome {
   @apply grid min-h-dvh place-content-center justify-items-center p-6 text-center;
@@ -511,7 +548,7 @@ input::placeholder {
   .topbar-actions .button {
     @apply px-2.5;
   }
-  .topbar-actions .button:first-child {
+  .topbar-actions .import-button {
     @apply hidden;
   }
   .content-section {
@@ -523,8 +560,8 @@ input::placeholder {
   .photo-grid {
     @apply grid-cols-2 gap-3;
   }
-  .editor-hint {
-    @apply hidden;
+  .zoom-controls button {
+    @apply px-2.5;
   }
   .editor-workspace {
     @apply flex-col;

@@ -67,15 +67,15 @@
         </span>
         <h1>{appState.area.name}</h1>
       </div>
-      <button
-        class="button primary"
-        onclick={() => input?.click()}
-        disabled={importing}
-      >
-        <Icon name="camera" />{importing
-          ? 'Wird geladen …'
-          : 'Fotos hinzufügen'}
-      </button>
+      {#if appState.editing}<button
+          class="button primary"
+          onclick={() => input?.click()}
+          disabled={importing}
+        >
+          <Icon name="camera" />{importing
+            ? 'Wird geladen …'
+            : 'Fotos hinzufügen'}
+        </button>{/if}
       <input
         bind:this={input}
         class="visually-hidden"
@@ -103,30 +103,39 @@
                 </span>{/if}
             </button>
             <div class="photo-meta">
-              <button
-                class="photo-title"
-                onclick={() => renamePhoto(photo)}
-                title="Titel ändern"
-              >
-                {photo.title}
-              </button>
-              <button
-                class="icon-button danger"
-                onclick={() => removePhoto(photo)}
-                aria-label="Foto löschen"
-              >
-                <Icon name="trash" size={18} />
-              </button>
+              {#if appState.editing}
+                <button
+                  class="photo-title"
+                  onclick={() => renamePhoto(photo)}
+                  title="Titel ändern"
+                >
+                  {photo.title}
+                </button>
+                <button
+                  class="icon-button danger"
+                  onclick={() => removePhoto(photo)}
+                  aria-label="Foto löschen"
+                >
+                  <Icon name="trash" size={18} />
+                </button>
+              {:else}
+                <strong class="photo-title-static">{photo.title}</strong>
+              {/if}
             </div>
           </article>
         {/each}
       </div>
-    {:else}
+    {:else if appState.editing}
       <button class="empty-upload" onclick={() => input?.click()}>
         <span class="empty-icon"><Icon name="camera" size={26} /></span>
         <strong>Erstes Foto aufnehmen</strong>
         <small>Kamera verwenden oder ein Bild auswählen</small>
       </button>
+    {:else}
+      <div class="empty-state">
+        <Icon name="image" size={24} />
+        <span>Noch keine Fotos</span>
+      </div>
     {/if}
   </section>
 {/if}

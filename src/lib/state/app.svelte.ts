@@ -23,6 +23,7 @@ export class AppState {
   levelId = $state<string | null>(null);
   areaId = $state<string | null>(null);
   view = $state<AppView>('floorplan');
+  editing = $state(false);
   loading = $state(true);
 
   get project(): Project | undefined {

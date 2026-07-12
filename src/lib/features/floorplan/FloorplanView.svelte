@@ -10,13 +10,19 @@
   let planElement = $state<HTMLElement>();
   let selectedAreaId = $state('');
   let placing = $state(false);
-  let editing = $state(false);
   let plan = $derived(appState.levelFloorplan);
   let hotspots = $derived(
     plan
       ? appState.hotspots.filter((item) => item.floorplanId === plan!.id)
       : [],
   );
+
+  $effect(() => {
+    if (!appState.editing) {
+      selectedAreaId = '';
+      placing = false;
+    }
+  });
 
   async function setFloorplan(event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
@@ -32,12 +38,12 @@
     await db.floorplans.put(floorplan);
     await db.projects.update(appState.projectId, { updatedAt: now() });
     await appState.load();
-    editing = true;
     if (input) input.value = '';
   }
 
   async function place(event: PointerEvent) {
     if (
+      !appState.editing ||
       !placing ||
       !selectedAreaId ||
       !plan ||
@@ -70,13 +76,6 @@
       await db.floorplans.delete(plan!.id);
     });
     await appState.load();
-    editing = false;
-  }
-
-  function finishEditing() {
-    selectedAreaId = '';
-    placing = false;
-    editing = false;
   }
 </script>
 
@@ -86,13 +85,6 @@
       <span class="eyebrow">{appState.level?.name}</span>
       <h1>Grundriss</h1>
     </div>
-    {#if plan && !editing}
-      <button class="button" onclick={() => (editing = true)}>
-        Bearbeiten
-      </button>
-    {:else if plan}
-      <button class="button primary" onclick={finishEditing}>Fertig</button>
-    {/if}
     <input
       bind:this={input}
       class="visually-hidden"
@@ -103,7 +95,7 @@
   </div>
 
   {#if plan}
-    {#if editing}
+    {#if appState.editing}
       <div class="floorplan-tools">
         <select bind:value={selectedAreaId} aria-label="Raum auswählen">
           <option value="">Raum auswählen …</option>
@@ -148,23 +140,28 @@
           appState.areas.find((item) => item.id === hotspot.areaId),
         )}
         {#if area}<button
-            class:editing
+            class:editing={appState.editing}
             class="room-hotspot"
             style={`left:${hotspot.position.x * 100}%;top:${hotspot.position.y * 100}%`}
             onclick={(event) => {
               event.stopPropagation();
-              if (!editing) appState.selectArea(area.id);
+              if (!appState.editing) appState.selectArea(area.id);
             }}
           >
             {area.name}
           </button>{/if}
       {/each}
     </div>
-  {:else}
+  {:else if appState.editing}
     <button class="empty-upload floorplan-empty" onclick={() => input?.click()}>
       <span class="empty-icon"><Icon name="floorplan" size={26} /></span>
       <strong>Grundriss hinzufügen</strong>
       <small>Foto einer Skizze oder vorhandenen Grundriss auswählen</small>
     </button>
+  {:else}
+    <div class="empty-state">
+      <Icon name="floorplan" size={24} />
+      <span>Noch kein Grundriss</span>
+    </div>
   {/if}
 </section>

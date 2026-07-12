@@ -2,12 +2,10 @@
   import Icon from '@/lib/components/Icon.svelte';
   import { appState } from '@/lib/state/app.svelte';
   let {
-    addProject,
     addLevel,
     addArea,
     close,
   }: {
-    addProject: () => void;
     addLevel: () => void;
     addArea: () => void;
     close?: () => void;
@@ -16,7 +14,7 @@
 
 <aside class="sidebar">
   <div class="brand-row">
-    <button class="project-switch" onclick={addProject} title="Neues Projekt">
+    <div class="project-switch">
       <span class="brand-mark">P</span>
       <span>
         <strong>{appState.project?.name ?? 'PloskowScan'}</strong>
@@ -24,7 +22,7 @@
             {appState.project.address}
           </small>{/if}
       </span>
-    </button>
+    </div>
     {#if close}<button class="icon-button mobile-close" onclick={close}>
         <Icon name="x" />
       </button>{/if}
@@ -64,16 +62,18 @@
                   {area.name}<Icon name="chevron" size={15} />
                 </button>
               {/each}
-              <button class="add-row" onclick={addArea}>
-                <Icon name="plus" size={16} /> Bereich
-              </button>
+              {#if appState.editing}<button class="add-row" onclick={addArea}>
+                  <Icon name="plus" size={16} /> Bereich
+                </button>{/if}
             </div>
           {/if}
         </div>
       {/each}
-      <button class="add-level" onclick={addLevel}>
-        <Icon name="plus" size={17} /> Geschoss hinzufügen
-      </button>
+      {#if appState.editing}
+        <button class="add-level" onclick={addLevel}>
+          <Icon name="plus" size={17} /> Geschoss hinzufügen
+        </button>
+      {/if}
     </nav>
   {/if}
 </aside>

@@ -5,6 +5,7 @@
   import { appState } from '@/lib/state/app.svelte';
   import type { Measurement, Photo, Point } from '@/lib/types/project';
   import { createId, now } from '@/lib/utils/id';
+  import { createPanzoom, type PanzoomController } from '@/lib/utils/panzoom';
 
   let { photo, close }: { photo: Photo; close: () => void } = $props();
   let firstPoint = $state<Point | null>(null);
@@ -13,13 +14,31 @@
   let note = $state('');
   let saving = $state(false);
   let error = $state('');
-  let editor: HTMLElement;
+  let viewport = $state<HTMLElement>();
+  let editor = $state<HTMLElement>();
+  let panzoom = $state<PanzoomController>();
   let measurements = $derived(
     appState.measurements.filter((item) => item.photoId === photo.id),
   );
 
+  $effect(() => {
+    if (!viewport || !editor) return;
+    const controller = createPanzoom(viewport, editor, setPoint);
+    panzoom = controller;
+    return () => controller.destroy();
+  });
+
+  $effect(() => {
+    if (!appState.editing) {
+      firstPoint = null;
+      secondPoint = null;
+    }
+  });
+
   function setPoint(event: PointerEvent) {
+    if (!appState.editing) return;
     if ((event.target as Element).closest('[data-measurement]')) return;
+    if (!editor) return;
     const rect = editor.getBoundingClientRect();
     const point = {
       x: (event.clientX - rect.left) / rect.width,
@@ -90,122 +109,140 @@
         {measurements.length === 1 ? 'Maß' : 'Maße'}
       </span>
     </div>
-    <span class="editor-hint">Zwei Punkte antippen</span>
+    <button
+      class:active={appState.editing}
+      class="editor-edit-toggle"
+      onclick={() => (appState.editing = !appState.editing)}
+    >
+      {appState.editing ? 'Bearbeiten beenden' : 'Bearbeiten'}
+    </button>
+    <div class="zoom-controls" aria-label="Bildzoom">
+      <button onclick={() => panzoom?.zoomOut()} aria-label="Verkleinern">
+        −
+      </button>
+      <button onclick={() => panzoom?.reset()}>Einpassen</button>
+      <button onclick={() => panzoom?.zoomIn()} aria-label="Vergrößern">
+        +
+      </button>
+    </div>
   </header>
 
   <main class="editor-workspace">
     <div class="photo-stage">
       <div
-        class="photo-editor"
-        bind:this={editor}
-        onpointerup={setPoint}
+        class="panzoom-viewport"
+        bind:this={viewport}
         role="application"
-        aria-label="Maße auf Foto einzeichnen"
+        aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >
-        <BlobImage blob={photo.blob} alt={photo.title} />
-        <svg
-          class="annotation-layer"
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          {#each measurements as item (item.id)}
-            <line
-              x1={item.start.x * 100}
-              y1={item.start.y * 100}
-              x2={item.end.x * 100}
-              y2={item.end.y * 100}
-              class="measure-line"
-            />
-          {/each}
-          {#if firstPoint && secondPoint}
-            <line
-              x1={firstPoint.x * 100}
-              y1={firstPoint.y * 100}
-              x2={secondPoint.x * 100}
-              y2={secondPoint.y * 100}
-              class="draft-line"
-            />
-          {/if}
-        </svg>
-        {#each measurements as item (item.id)}
-          {const position = $derived(labelPosition(item))}
-          <span
-            class="measure-dot"
-            style={`left:${item.start.x * 100}%;top:${item.start.y * 100}%`}
-          ></span>
-          <span
-            class="measure-dot"
-            style={`left:${item.end.x * 100}%;top:${item.end.y * 100}%`}
-          ></span>
-          <div
-            data-measurement
-            class="measure-label"
-            style={`left:${position.x * 100}%;top:${position.y * 100}%`}
+        <div class="photo-editor" bind:this={editor}>
+          <BlobImage blob={photo.blob} alt={photo.title} />
+          <svg
+            class="annotation-layer"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
           >
-            {item.value}{#if item.note}<small>{item.note}</small>{/if}
-          </div>
-        {/each}
-        {#if firstPoint}<span
-            class="measure-dot draft"
-            style={`left:${firstPoint.x * 100}%;top:${firstPoint.y * 100}%`}
-          ></span>{/if}
-        {#if secondPoint}<span
-            class="measure-dot draft"
-            style={`left:${secondPoint.x * 100}%;top:${secondPoint.y * 100}%`}
-          ></span>{/if}
+            {#each measurements as item (item.id)}
+              <line
+                x1={item.start.x * 100}
+                y1={item.start.y * 100}
+                x2={item.end.x * 100}
+                y2={item.end.y * 100}
+                class="measure-line"
+              />
+            {/each}
+            {#if firstPoint && secondPoint}
+              <line
+                x1={firstPoint.x * 100}
+                y1={firstPoint.y * 100}
+                x2={secondPoint.x * 100}
+                y2={secondPoint.y * 100}
+                class="draft-line"
+              />
+            {/if}
+          </svg>
+          {#each measurements as item (item.id)}
+            {const position = $derived(labelPosition(item))}
+            <span
+              class="measure-dot"
+              style={`left:${item.start.x * 100}%;top:${item.start.y * 100}%`}
+            ></span>
+            <span
+              class="measure-dot"
+              style={`left:${item.end.x * 100}%;top:${item.end.y * 100}%`}
+            ></span>
+            <div
+              data-measurement
+              class="measure-label"
+              style={`left:${position.x * 100}%;top:${position.y * 100}%`}
+            >
+              {item.value}{#if item.note}<small>{item.note}</small>{/if}
+            </div>
+          {/each}
+          {#if firstPoint}<span
+              class="measure-dot draft"
+              style={`left:${firstPoint.x * 100}%;top:${firstPoint.y * 100}%`}
+            ></span>{/if}
+          {#if secondPoint}<span
+              class="measure-dot draft"
+              style={`left:${secondPoint.x * 100}%;top:${secondPoint.y * 100}%`}
+            ></span>{/if}
+        </div>
       </div>
     </div>
 
     <aside class="measure-panel">
-      {#if firstPoint && secondPoint}
-        <h2>Maß eintragen</h2>
-        <label>
-          <span>Wert</span>
-          <input
-            bind:value
-            placeholder="z. B. 2,46 m"
-            onkeydown={(event) => event.key === 'Enter' && save()}
-          />
-        </label>
-        <label>
-          <span>
-            Notiz <small>optional</small>
-          </span>
-          <input bind:value={note} placeholder="Fensterbreite" />
-        </label>
-        {#if error}<p class="editor-error">{error}</p>{/if}
-        <div class="button-row">
-          <button
-            class="button"
-            onclick={() => {
-              firstPoint = null;
-              secondPoint = null;
-            }}
-          >
-            Abbrechen
-          </button>
-          <button
-            class="button primary"
-            onclick={save}
-            disabled={!value.trim() || saving}
-          >
-            Speichern
-          </button>
-        </div>
-      {:else if firstPoint}
-        <div class="instruction">
-          <span class="step-number">2</span>
-          <p>Zweiten Endpunkt des Maßes antippen.</p>
-        </div>
-      {:else}
-        <div class="instruction">
-          <span class="step-number">1</span>
-          <p>Ersten Endpunkt des Maßes antippen.</p>
-        </div>
+      {#if appState.editing}
+        {#if firstPoint && secondPoint}
+          <h2>Maß eintragen</h2>
+          <label>
+            <span>Wert</span>
+            <input
+              bind:value
+              placeholder="z. B. 2,46 m"
+              onkeydown={(event) => event.key === 'Enter' && save()}
+            />
+          </label>
+          <label>
+            <span>
+              Notiz <small>optional</small>
+            </span>
+            <input bind:value={note} placeholder="Fensterbreite" />
+          </label>
+          {#if error}<p class="editor-error">{error}</p>{/if}
+          <div class="button-row">
+            <button
+              class="button"
+              onclick={() => {
+                firstPoint = null;
+                secondPoint = null;
+              }}
+            >
+              Abbrechen
+            </button>
+            <button
+              class="button primary"
+              onclick={save}
+              disabled={!value.trim() || saving}
+            >
+              Speichern
+            </button>
+          </div>
+        {:else if firstPoint}
+          <div class="instruction">
+            <span class="step-number">2</span>
+            <p>Zweiten Endpunkt des Maßes antippen.</p>
+          </div>
+        {:else}
+          <div class="instruction">
+            <span class="step-number">1</span>
+            <p>Ersten Endpunkt des Maßes antippen.</p>
+          </div>
+        {/if}
       {/if}
       {#if measurements.length}
-        <div class="measure-list">
+        <div class:view-only={!appState.editing} class="measure-list">
           <h3>Maße</h3>
           {#each measurements as item (item.id)}
             <div>
@@ -213,15 +250,20 @@
                 <strong>{item.value}</strong>
                 {#if item.note}<small>{item.note}</small>{/if}
               </span>
-              <button
-                class="icon-button danger"
-                onclick={() => remove(item.id)}
-                aria-label="Maß löschen"
-              >
-                <Icon name="trash" size={17} />
-              </button>
+              {#if appState.editing}<button
+                  class="icon-button danger"
+                  onclick={() => remove(item.id)}
+                  aria-label="Maß löschen"
+                >
+                  <Icon name="trash" size={17} />
+                </button>{/if}
             </div>
           {/each}
+        </div>
+      {:else if !appState.editing}
+        <div class="measure-list view-only">
+          <h3>Maße</h3>
+          <p class="no-measurements">Keine Maße eingetragen</p>
         </div>
       {/if}
     </aside>
