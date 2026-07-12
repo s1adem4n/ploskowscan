@@ -1,0 +1,562 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink: #171717;
+  --color-muted: #696969;
+  --color-line: #dededb;
+  --color-paper: #ffffff;
+  --color-canvas: #f4f4f1;
+  --color-accent: #20664d;
+  --color-accent-hover: #174f3c;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+:root {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  min-height: 100%;
+  margin: 0;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 28%, transparent);
+  outline-offset: 2px;
+}
+
+.button {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-line bg-paper px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+.button:hover {
+  background: #f7f7f5;
+}
+.button.primary {
+  @apply border-accent bg-accent text-white;
+}
+.button.primary:hover {
+  background: var(--color-accent-hover);
+}
+.button.quiet {
+  @apply border-transparent bg-transparent;
+}
+.button.compact {
+  @apply min-h-9 px-3 py-1.5;
+}
+.button.danger-text {
+  color: #a4332d;
+}
+.button-row {
+  @apply flex gap-2;
+}
+.button-row > * {
+  flex: 1;
+}
+.icon-button {
+  @apply inline-grid size-10 shrink-0 place-items-center rounded-lg border-0 bg-transparent text-muted;
+}
+.icon-button:hover {
+  @apply bg-black/5 text-ink;
+}
+.icon-button.danger:hover {
+  color: #a4332d;
+  background: #fff0ef;
+}
+.visually-hidden {
+  @apply absolute size-px overflow-hidden whitespace-nowrap;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+}
+
+.app-shell {
+  @apply flex h-dvh overflow-hidden;
+}
+.sidebar-wrap {
+  @apply w-70 shrink-0 border-r border-line bg-paper;
+}
+.sidebar {
+  @apply flex h-full flex-col overflow-y-auto;
+}
+.brand-row {
+  @apply flex h-18 items-center border-b border-line px-3;
+}
+.project-switch {
+  @apply flex min-w-0 flex-1 items-center gap-3 rounded-lg border-0 bg-transparent p-2 text-left;
+}
+.project-switch:hover {
+  @apply bg-black/4;
+}
+.project-switch > span:last-child {
+  @apply min-w-0;
+}
+.project-switch strong,
+.project-switch small {
+  @apply block truncate;
+}
+.project-switch strong {
+  @apply text-sm;
+}
+.project-switch small {
+  @apply mt-0.5 text-xs font-normal text-muted;
+}
+.brand-mark {
+  @apply grid size-8 shrink-0 place-items-center rounded-lg bg-ink text-sm font-bold text-white;
+}
+.brand-mark.large {
+  @apply size-12 text-lg;
+}
+.project-nav {
+  @apply py-3;
+}
+.level-block {
+  @apply px-2;
+}
+.level-button {
+  @apply flex min-h-11 w-full items-center justify-between rounded-lg border-0 bg-transparent px-3 text-left text-sm font-semibold;
+}
+.level-button:hover,
+.level-button.current {
+  @apply bg-canvas;
+}
+.area-list {
+  @apply mb-2 ml-3 border-l border-line py-1 pl-2;
+}
+.area-list button {
+  @apply flex min-h-10 w-full items-center gap-2 rounded-md border-0 bg-transparent px-2 text-left text-sm text-muted;
+}
+.area-list button svg {
+  @apply ml-auto;
+}
+.area-list button:hover,
+.area-list button.current {
+  @apply bg-canvas text-ink;
+}
+.area-list button.current {
+  @apply font-semibold;
+}
+.area-dot {
+  @apply size-2 rounded-full bg-[#78958a];
+}
+.area-dot.outside {
+  @apply bg-[#a88f64];
+}
+.area-list .add-row,
+.add-level {
+  @apply text-muted;
+}
+.add-level {
+  @apply mx-2 flex min-h-10 w-[calc(100%-1rem)] items-center gap-2 rounded-lg border-0 bg-transparent px-3 text-sm;
+}
+.add-level:hover {
+  @apply bg-canvas text-ink;
+}
+.main-column {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+.topbar {
+  @apply flex h-18 shrink-0 items-center gap-4 border-b border-line bg-paper px-5;
+}
+.project-tabs {
+  @apply flex min-w-0 flex-1 items-center gap-1 overflow-x-auto;
+}
+.project-tabs > button:not(.icon-button) {
+  @apply min-h-9 shrink-0 rounded-lg border-0 bg-transparent px-3 text-sm text-muted;
+}
+.project-tabs > button.current {
+  @apply bg-canvas font-semibold text-ink;
+}
+.topbar-actions {
+  @apply flex items-center gap-2;
+}
+.menu-button,
+.mobile-close {
+  @apply hidden;
+}
+.menu-lines,
+.menu-lines::before,
+.menu-lines::after {
+  @apply block h-0.5 w-5 bg-current;
+  content: '';
+}
+.menu-lines {
+  position: relative;
+}
+.menu-lines::before {
+  position: absolute;
+  top: -6px;
+}
+.menu-lines::after {
+  position: absolute;
+  top: 6px;
+}
+.page-content {
+  @apply min-h-0 flex-1 overflow-y-auto;
+}
+.content-section {
+  @apply mx-auto w-full max-w-7xl p-8;
+}
+.page-heading {
+  @apply mb-7 flex items-center gap-3;
+}
+.page-heading > div:first-child {
+  @apply mr-auto;
+}
+.page-heading h1 {
+  @apply m-0 text-2xl leading-tight font-semibold tracking-tight;
+}
+.eyebrow {
+  @apply mb-1 block text-xs font-semibold tracking-wide text-muted uppercase;
+}
+.error-banner {
+  @apply flex items-center justify-between bg-[#fff0ef] px-5 py-2 text-sm text-[#8d2823];
+}
+.error-banner button {
+  @apply border-0 bg-transparent;
+}
+
+.photo-grid {
+  @apply grid grid-cols-2 gap-5 xl:grid-cols-3;
+}
+.photo-card {
+  @apply overflow-hidden rounded-xl border border-line bg-paper;
+}
+.photo-open {
+  @apply relative block aspect-4/3 w-full overflow-hidden border-0 bg-[#e8e8e4] p-0;
+}
+.photo-open img {
+  @apply size-full object-cover transition-transform;
+}
+.photo-open:hover img {
+  transform: scale(1.015);
+}
+.count-badge {
+  @apply absolute right-3 bottom-3 rounded-md bg-black/75 px-2 py-1 text-xs font-semibold text-white;
+  backdrop-filter: blur(5px);
+}
+.photo-meta {
+  @apply flex min-h-13 items-center gap-2 px-3;
+}
+.photo-title {
+  @apply mr-auto min-w-0 truncate rounded border-0 bg-transparent p-1 text-left text-sm font-semibold;
+}
+.photo-title:hover {
+  @apply bg-canvas;
+}
+.empty-upload {
+  @apply flex min-h-70 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#c9c9c4] bg-transparent p-8 text-center;
+}
+.empty-upload:hover {
+  @apply border-accent bg-white;
+}
+.empty-upload strong {
+  @apply mt-4 text-sm;
+}
+.empty-upload small {
+  @apply mt-1 text-sm text-muted;
+}
+.empty-icon {
+  @apply grid size-12 place-items-center rounded-xl bg-white text-accent shadow-sm;
+}
+
+.dialog-backdrop {
+  @apply fixed inset-0 z-50 grid place-items-center bg-black/35 p-5;
+  backdrop-filter: blur(2px);
+}
+.dialog {
+  @apply w-full max-w-md overflow-hidden rounded-xl border border-white/40 bg-paper shadow-2xl;
+}
+.dialog-header {
+  @apply flex h-15 items-center border-b border-line px-5;
+}
+.dialog-header h2 {
+  @apply mr-auto text-base font-semibold;
+}
+.dialog-body {
+  @apply p-5;
+}
+.form-stack {
+  @apply flex flex-col gap-4;
+}
+label {
+  @apply flex flex-col gap-1.5;
+}
+label > span {
+  @apply text-sm font-semibold;
+}
+label small {
+  @apply font-normal text-muted;
+}
+input,
+select {
+  @apply min-h-11 w-full rounded-lg border border-[#cfcfcb] bg-white px-3 text-base text-ink;
+}
+input::placeholder {
+  color: #999;
+}
+
+.editor-screen {
+  @apply fixed inset-0 z-40 flex flex-col bg-[#252525];
+  color: white;
+}
+.editor-toolbar {
+  @apply flex h-16 shrink-0 items-center gap-4 border-b border-white/10 bg-[#1c1c1c] px-4;
+}
+.editor-toolbar .button {
+  color: white;
+}
+.editor-title {
+  @apply flex min-w-0 flex-1 flex-col;
+}
+.editor-title strong {
+  @apply truncate text-sm;
+}
+.editor-title span,
+.editor-hint {
+  @apply text-xs text-white/55;
+}
+.editor-workspace {
+  @apply flex min-h-0 flex-1;
+}
+.photo-stage {
+  @apply grid min-w-0 flex-1 place-items-center overflow-auto p-5;
+}
+.photo-editor {
+  @apply relative max-h-full w-fit max-w-full touch-none select-none;
+  line-height: 0;
+}
+.photo-editor > img {
+  @apply block max-h-[calc(100dvh-6.5rem)] max-w-full object-contain;
+}
+.annotation-layer {
+  @apply pointer-events-none absolute inset-0 size-full overflow-visible;
+}
+.measure-line,
+.draft-line {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 3px;
+}
+.measure-line {
+  stroke: #f4d35e;
+}
+.draft-line {
+  stroke: white;
+  stroke-dasharray: 7 5;
+}
+.measure-dot {
+  @apply pointer-events-none absolute z-10 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-[#f4d35e] shadow-sm;
+}
+.measure-dot.draft {
+  @apply bg-white;
+}
+.measure-label {
+  @apply absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-[#f4d35e] bg-ink/90 px-2 py-1 text-sm leading-tight font-bold text-white shadow-lg;
+}
+.measure-label small {
+  @apply mt-0.5 block text-[10px] font-normal text-white/70;
+}
+.measure-panel {
+  @apply w-75 shrink-0 overflow-y-auto border-l border-white/10 bg-[#1c1c1c] p-5;
+}
+.measure-panel h2 {
+  @apply mb-4 text-base font-semibold;
+}
+.measure-panel label {
+  @apply mb-4;
+}
+.measure-panel input {
+  @apply border-white/20 bg-white/8 text-white;
+}
+.measure-panel .button:not(.primary) {
+  @apply border-white/25 bg-transparent text-white;
+}
+.measure-panel .button:not(.primary):hover {
+  @apply bg-white/10;
+}
+.editor-error {
+  @apply -mt-1 mb-3 text-sm text-[#ffaaa5];
+}
+.instruction {
+  @apply flex items-start gap-3 text-sm text-white/70;
+}
+.step-number {
+  @apply grid size-7 shrink-0 place-items-center rounded-full bg-white font-bold text-ink;
+}
+.instruction p {
+  @apply m-0 pt-1;
+}
+.measure-list {
+  @apply mt-7 border-t border-white/10 pt-5;
+}
+.measure-list h3 {
+  @apply mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase;
+}
+.measure-list > div {
+  @apply flex items-center gap-2 border-b border-white/8 py-2;
+}
+.measure-list > div > span {
+  @apply min-w-0 flex-1;
+}
+.measure-list strong,
+.measure-list small {
+  @apply block;
+}
+.measure-list small {
+  @apply truncate text-xs text-white/55;
+}
+
+.floorplan-tools {
+  @apply flex items-center gap-2 rounded-xl border border-line bg-paper p-3;
+}
+.floorplan-tools select {
+  @apply w-60;
+}
+.floorplan-tools .active {
+  @apply border-accent bg-[#eaf3ef] text-accent;
+}
+.push-right {
+  @apply ml-auto;
+}
+.floorplan-note {
+  @apply my-3 text-sm text-muted;
+}
+.floorplan-stage {
+  @apply relative mx-auto w-fit max-w-full overflow-hidden rounded-lg border border-line bg-white select-none;
+}
+.floorplan-stage.placing {
+  cursor: crosshair;
+}
+.floorplan-stage > img {
+  @apply block max-h-[calc(100dvh-15rem)] max-w-full object-contain;
+}
+.room-hotspot {
+  @apply absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-accent px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow-lg;
+}
+.room-hotspot:hover {
+  @apply bg-accent-hover;
+}
+.room-hotspot.editing {
+  @apply cursor-default bg-[#555];
+}
+.room-hotspot.editing:hover {
+  @apply bg-[#555];
+}
+.floorplan-empty {
+  @apply min-h-90;
+}
+
+.welcome {
+  @apply grid min-h-dvh place-content-center justify-items-center p-6 text-center;
+}
+.welcome h1 {
+  @apply mt-5 mb-2 text-3xl font-semibold tracking-tight;
+}
+.welcome p {
+  @apply m-0 max-w-md text-muted;
+}
+.welcome-actions {
+  @apply mt-7 flex gap-3;
+}
+.large-button {
+  @apply min-h-12 px-5;
+}
+.app-loading {
+  @apply grid min-h-dvh place-items-center text-sm font-semibold text-muted;
+}
+.mobile-overlay {
+  display: none;
+  border: 0;
+  padding: 0;
+}
+
+@media (max-width: 800px) {
+  .sidebar-wrap {
+    @apply fixed inset-y-0 left-0 z-40 w-[min(21rem,88vw)] -translate-x-full shadow-2xl transition-transform;
+  }
+  .sidebar-wrap.open {
+    @apply translate-x-0;
+  }
+  .mobile-overlay.open {
+    @apply fixed inset-0 z-30 block bg-black/30;
+  }
+  .mobile-close,
+  .menu-button {
+    @apply inline-grid;
+  }
+  .topbar {
+    @apply h-16 gap-2 px-3;
+  }
+  .project-tabs {
+    @apply hidden;
+  }
+  .topbar-actions {
+    @apply ml-auto;
+  }
+  .topbar-actions .button {
+    @apply px-2.5;
+  }
+  .topbar-actions .button:first-child {
+    @apply hidden;
+  }
+  .content-section {
+    @apply p-4;
+  }
+  .page-heading {
+    @apply mb-5;
+  }
+  .photo-grid {
+    @apply grid-cols-2 gap-3;
+  }
+  .editor-hint {
+    @apply hidden;
+  }
+  .editor-workspace {
+    @apply flex-col;
+  }
+  .photo-stage {
+    @apply p-2;
+  }
+  .photo-editor > img {
+    max-height: calc(100dvh - 18rem);
+  }
+  .measure-panel {
+    @apply w-full flex-1 border-t border-l-0 p-4;
+  }
+  .floorplan-tools {
+    @apply flex-wrap;
+  }
+  .floorplan-tools select {
+    @apply w-full;
+  }
+  .push-right {
+    @apply ml-0;
+  }
+}
+
+@media (max-width: 520px) {
+  .photo-grid {
+    @apply grid-cols-1;
+  }
+  .topbar-actions .button span {
+    display: none;
+  }
+  .welcome-actions {
+    @apply w-full flex-col;
+  }
+}
