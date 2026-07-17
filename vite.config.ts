@@ -14,6 +14,7 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+  base: '/ploskowscan',
   resolve: {
     alias: {
       '@': '/src',
