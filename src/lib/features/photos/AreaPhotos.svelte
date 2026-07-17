@@ -47,8 +47,20 @@
   async function renamePhoto(photo: Photo) {
     const title = prompt('Titel des Fotos', photo.title)?.trim();
     if (!title || title === photo.title) return;
-    await db.photos.update(photo.id, { title });
-    await appState.load();
+    const timestamp = now();
+    await db.transaction('rw', db.photos, db.projects, async () => {
+      await db.photos.update(photo.id, { title });
+      await db.projects.update(photo.projectId, { updatedAt: timestamp });
+    });
+
+    // A title change does not require re-reading the Blob from IndexedDB. Apart
+    // from being faster, keeping this object avoids unnecessarily replacing a
+    // currently displayed image on Safari.
+    photo.title = title;
+    const project = appState.projects.find(
+      (item) => item.id === photo.projectId,
+    );
+    if (project) project.updatedAt = timestamp;
   }
 </script>
 

@@ -1,4 +1,3 @@
-import { saveAs } from 'file-saver';
 import JSZip from 'jszip';
 
 import { db } from '@/lib/db/database';
@@ -7,7 +6,7 @@ import { extensionFor, safeFilename } from '@/lib/utils/files';
 
 const MANIFEST = 'projekt.json';
 
-export async function exportProject(projectId: string): Promise<void> {
+export async function exportProject(projectId: string): Promise<File> {
   const project = await db.projects.get(projectId);
   if (!project) throw new Error('Projekt nicht gefunden.');
 
@@ -52,7 +51,10 @@ export async function exportProject(projectId: string): Promise<void> {
     compression: 'DEFLATE',
     compressionOptions: { level: 6 },
   });
-  saveAs(blob, `${safeFilename(project.name)}.ploskowscan.zip`);
+  return new File([blob], `${safeFilename(project.name)}.ploskowscan.zip`, {
+    type: 'application/zip',
+    lastModified: Date.now(),
+  });
 }
 
 function findMedia(

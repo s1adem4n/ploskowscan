@@ -14,9 +14,6 @@ importers:
       dexie:
         specifier: ^4.4.4
         version: 4.4.4
-      file-saver:
-        specifier: ^2.0.5
-        version: 2.0.5
       jszip:
         specifier: ^3.10.1
         version: 3.10.1
@@ -30,9 +27,6 @@ importers:
       '@tsconfig/svelte':
         specifier: ^5.0.8
         version: 5.0.8
-      '@types/file-saver':
-        specifier: ^2.0.7
-        version: 2.0.7
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.3
@@ -433,9 +427,6 @@ packages:
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
 
-  '@types/file-saver@2.0.7':
-    resolution: {integrity: sha512-dNKVfHd/jk0SkR/exKGj2ggkB45MAkzvWCaqLUUgkyjITkGNzH8H+yUwr+BLJUBjZOe9w8X3wgmXhZDRg1ED6A==}
-
   '@types/node@24.13.3':
     resolution: {integrity: sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q==}
 
@@ -503,9 +494,6 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
-
-  file-saver@2.0.5:
-    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -1032,8 +1020,6 @@ snapshots:
 
   '@types/estree@1.0.9': {}
 
-  '@types/file-saver@2.0.7': {}
-
   '@types/node@24.13.3':
     dependencies:
       undici-types: 7.18.2
@@ -1076,8 +1062,6 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.5):
     optionalDependencies:
       picomatch: 4.0.5
-
-  file-saver@2.0.5: {}
 
   fsevents@2.3.3:
     optional: true

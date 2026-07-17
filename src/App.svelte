@@ -1,5 +1,6 @@
 <script lang="ts">
   import AppSidebar from '@/lib/components/AppSidebar.svelte';
+  import Dialog from '@/lib/components/Dialog.svelte';
   import Icon from '@/lib/components/Icon.svelte';
   import { deleteProject } from '@/lib/db/projects';
   import { exportProject, importProject } from '@/lib/export/projectBundle';
@@ -15,6 +16,15 @@
   let busy = $state(false);
   let error = $state('');
   let importInput = $state<HTMLInputElement>();
+  let exportedFile = $state<File | null>(null);
+  let exportUrl = $state('');
+
+  $effect(() => {
+    const objectUrl = exportUrl;
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  });
 
   $effect(() => {
     appState.load().catch(showError);
@@ -31,11 +41,44 @@
     busy = true;
     error = '';
     try {
-      await exportProject(appState.projectId);
+      const file = await exportProject(appState.projectId);
+      exportedFile = file;
+      exportUrl = URL.createObjectURL(file);
     } catch (reason) {
       showError(reason);
     } finally {
       busy = false;
+    }
+  }
+
+  function closeExport() {
+    exportedFile = null;
+    exportUrl = '';
+  }
+
+  function canShareExport(): boolean {
+    if (!exportedFile || typeof navigator.share !== 'function') return false;
+    try {
+      return (
+        typeof navigator.canShare !== 'function' ||
+        navigator.canShare({ files: [exportedFile] })
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  async function shareExport() {
+    if (!exportedFile || !canShareExport()) return;
+    try {
+      await navigator.share({
+        files: [exportedFile],
+        title: appState.project?.name ?? 'PloskowScan-Export',
+      });
+    } catch (reason) {
+      if (reason instanceof DOMException && reason.name === 'AbortError')
+        return;
+      showError(reason);
     }
   }
 
@@ -193,3 +236,27 @@
   mode={createItemMode ?? 'area'}
   close={() => (createItemMode = null)}
 />
+<Dialog open={exportedFile !== null} title="Export bereit" close={closeExport}>
+  <div class="form-stack">
+    <p>
+      Die Projektdatei wurde erstellt. Auf dem iPad kannst du sie über „Teilen“
+      in der Dateien-App sichern.
+    </p>
+    <div class="button-row">
+      {#if canShareExport()}<button
+          class="button primary"
+          onclick={shareExport}
+        >
+          Teilen / In Dateien sichern
+        </button>{/if}
+      <a
+        class:primary={!canShareExport()}
+        class="button"
+        href={exportUrl}
+        download={exportedFile?.name}
+      >
+        Herunterladen
+      </a>
+    </div>
+  </div>
+</Dialog>
