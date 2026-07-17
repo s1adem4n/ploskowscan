@@ -2,6 +2,7 @@
   import BlobImage from '@/lib/components/BlobImage.svelte';
   import Icon from '@/lib/components/Icon.svelte';
   import { db } from '@/lib/db/database';
+  import { loadPhoto, mediaBytes, type StoredPhoto } from '@/lib/db/media';
   import { appState } from '@/lib/state/app.svelte';
   import type { Photo } from '@/lib/types/project';
   import { createId, now } from '@/lib/utils/id';
@@ -9,6 +10,8 @@
   import PhotoEditor from './PhotoEditor.svelte';
 
   let input = $state<HTMLInputElement>();
+  let replaceInput = $state<HTMLInputElement>();
+  let replacing = $state<Photo | null>(null);
   let editing = $state<Photo | null>(null);
   let importing = $state(false);
 
@@ -16,23 +19,67 @@
     const files = [...((event.currentTarget as HTMLInputElement).files ?? [])];
     if (!files.length || !appState.area || !appState.projectId) return;
     importing = true;
-    const start = appState.areaPhotos.length;
-    const timestamp = now();
-    const photos: Photo[] = files.map((file, index) => ({
-      id: createId(),
-      projectId: appState.projectId!,
-      areaId: appState.area!.id,
-      title: file.name.replace(/\.[^.]+$/, '') || `Foto ${start + index + 1}`,
-      blob: file,
-      createdAt: timestamp,
-      sortOrder: start + index,
-    }));
-    await db.photos.bulkAdd(photos);
-    await db.projects.update(appState.projectId, { updatedAt: timestamp });
-    await appState.load();
-    importing = false;
-    if (input) input.value = '';
-    if (photos.length === 1) editing = photos[0];
+    try {
+      const start = appState.areaPhotos.length;
+      const timestamp = now();
+      const storedPhotos: StoredPhoto[] = await Promise.all(
+        files.map(async (file, index) => ({
+          id: createId(),
+          projectId: appState.projectId!,
+          areaId: appState.area!.id,
+          title:
+            file.name.replace(/\.[^.]+$/, '') || `Foto ${start + index + 1}`,
+          ...(await mediaBytes(file)),
+          createdAt: timestamp,
+          sortOrder: start + index,
+        })),
+      );
+      await db.photos.bulkAdd(storedPhotos);
+      await db.projects.update(appState.projectId, { updatedAt: timestamp });
+      await appState.load();
+      const photos = storedPhotos.map(loadPhoto);
+      if (photos.length === 1) editing = photos[0];
+    } catch (reason) {
+      alert(
+        reason instanceof Error
+          ? reason.message
+          : 'Das Foto konnte nicht dauerhaft gespeichert werden.',
+      );
+    } finally {
+      importing = false;
+      if (input) input.value = '';
+    }
+  }
+
+  function chooseReplacement(photo: Photo) {
+    replacing = photo;
+    replaceInput?.click();
+  }
+
+  async function replacePhoto(event: Event) {
+    const file = (event.currentTarget as HTMLInputElement).files?.[0];
+    const photo = replacing;
+    if (!file || !photo) return;
+    importing = true;
+    try {
+      const stored = await mediaBytes(file);
+      const timestamp = now();
+      await db.transaction('rw', db.photos, db.projects, async () => {
+        await db.photos.update(photo.id, { ...stored, blob: undefined });
+        await db.projects.update(photo.projectId, { updatedAt: timestamp });
+      });
+      photo.blob = new Blob([stored.bytes], { type: stored.mimeType });
+    } catch (reason) {
+      alert(
+        reason instanceof Error
+          ? reason.message
+          : 'Das Ersatzbild konnte nicht gespeichert werden.',
+      );
+    } finally {
+      importing = false;
+      replacing = null;
+      if (replaceInput) replaceInput.value = '';
+    }
   }
 
   async function removePhoto(photo: Photo) {
@@ -97,6 +144,13 @@
         multiple
         onchange={addPhotos}
       />
+      <input
+        bind:this={replaceInput}
+        class="visually-hidden"
+        type="file"
+        accept="image/*"
+        onchange={replacePhoto}
+      />
     </div>
 
     {#if appState.areaPhotos.length}
@@ -108,7 +162,11 @@
           )}
           <article class="photo-card">
             <button class="photo-open" onclick={() => (editing = photo)}>
-              <BlobImage blob={photo.blob} alt={photo.title} />
+              <BlobImage
+                blob={photo.blob}
+                alt={photo.title}
+                mediaId={`photo:${photo.id}`}
+              />
               {#if count}<span class="count-badge">
                   {count}
                   {count === 1 ? 'Maß' : 'Maße'}
@@ -122,6 +180,15 @@
                   title="Titel ändern"
                 >
                   {photo.title}
+                </button>
+                <button
+                  class="icon-button"
+                  onclick={() => chooseReplacement(photo)}
+                  aria-label={`Bild für „${photo.title}“ ersetzen`}
+                  title="Bild ersetzen; Maße bleiben erhalten"
+                  disabled={importing}
+                >
+                  <Icon name="image" size={18} />
                 </button>
                 <button
                   class="icon-button danger"

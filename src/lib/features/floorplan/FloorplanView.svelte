@@ -2,6 +2,7 @@
   import BlobImage from '@/lib/components/BlobImage.svelte';
   import Icon from '@/lib/components/Icon.svelte';
   import { db } from '@/lib/db/database';
+  import { storeFloorplan } from '@/lib/db/media';
   import { appState } from '@/lib/state/app.svelte';
   import type { Floorplan, FloorplanHotspot } from '@/lib/types/project';
   import { createId, now } from '@/lib/utils/id';
@@ -35,7 +36,7 @@
       blob: file,
       updatedAt: now(),
     };
-    await db.floorplans.put(floorplan);
+    await db.floorplans.put(await storeFloorplan(floorplan));
     await db.projects.update(appState.projectId, { updatedAt: now() });
     await appState.load();
     if (input) input.value = '';
@@ -134,7 +135,11 @@
       role="application"
       aria-label="Grundriss mit Raumnavigation"
     >
-      <BlobImage blob={plan.blob} alt={`Grundriss ${appState.level?.name}`} />
+      <BlobImage
+        blob={plan.blob}
+        alt={`Grundriss ${appState.level?.name}`}
+        mediaId={`floorplan:${plan.id}`}
+      />
       {#each hotspots as hotspot (hotspot.id)}
         {const area = $derived(
           appState.areas.find((item) => item.id === hotspot.areaId),

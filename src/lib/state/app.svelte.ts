@@ -1,4 +1,5 @@
 import { db } from '@/lib/db/database';
+import { loadFloorplan, loadPhoto, mediaBytes } from '@/lib/db/media';
 import type {
   Area,
   Floorplan,
@@ -73,12 +74,40 @@ export class AppState {
       db.floorplans.toArray(),
       db.hotspots.toArray(),
     ]);
+
+    // Move readable records from the old direct-Blob format to inline
+    // ArrayBuffer bytes. A broken Safari Blob is left in place so the UI can
+    // still recover it from a rendered image or let the user replace it.
+    for (const photo of photos) {
+      if (photo.bytes || !photo.blob) continue;
+      try {
+        const stored = await mediaBytes(photo.blob);
+        await db.photos.update(photo.id, { ...stored, blob: undefined });
+        Object.assign(photo, stored, { blob: undefined });
+      } catch {
+        // Recovery remains available from the visible image during export.
+      }
+    }
+    for (const floorplan of floorplans) {
+      if (floorplan.bytes || !floorplan.blob) continue;
+      try {
+        const stored = await mediaBytes(floorplan.blob);
+        await db.floorplans.update(floorplan.id, {
+          ...stored,
+          blob: undefined,
+        });
+        Object.assign(floorplan, stored, { blob: undefined });
+      } catch {
+        // See the photo migration above.
+      }
+    }
+
     this.projects = projects;
     this.levels = levels;
     this.areas = areas;
-    this.photos = photos;
+    this.photos = photos.map(loadPhoto);
     this.measurements = measurements;
-    this.floorplans = floorplans;
+    this.floorplans = floorplans.map(loadFloorplan);
     this.hotspots = hotspots;
 
     const projectId = preferredProjectId ?? this.projectId;

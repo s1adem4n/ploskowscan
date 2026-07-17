@@ -1,8 +1,20 @@
 import JSZip from 'jszip';
 
 import { db } from '@/lib/db/database';
+import {
+  loadFloorplan,
+  loadPhoto,
+  mediaBytes,
+  storeFloorplan,
+  storePhoto,
+} from '@/lib/db/media';
 import type { Floorplan, Photo, ProjectBundle } from '@/lib/types/project';
-import { extensionFor, safeFilename } from '@/lib/utils/files';
+import {
+  durableBlob,
+  extensionFor,
+  recoverRenderedImage,
+  safeFilename,
+} from '@/lib/utils/files';
 
 const MANIFEST = 'projekt.json';
 
@@ -10,15 +22,23 @@ export async function exportProject(projectId: string): Promise<File> {
   const project = await db.projects.get(projectId);
   if (!project) throw new Error('Projekt nicht gefunden.');
 
-  const [levels, areas, photos, measurements, floorplans, hotspots] =
-    await Promise.all([
-      db.levels.where('projectId').equals(projectId).sortBy('sortOrder'),
-      db.areas.where('projectId').equals(projectId).sortBy('sortOrder'),
-      db.photos.where('projectId').equals(projectId).sortBy('sortOrder'),
-      db.measurements.where('projectId').equals(projectId).toArray(),
-      db.floorplans.where('projectId').equals(projectId).toArray(),
-      db.hotspots.where('projectId').equals(projectId).toArray(),
-    ]);
+  const [
+    levels,
+    areas,
+    storedPhotos,
+    measurements,
+    storedFloorplans,
+    hotspots,
+  ] = await Promise.all([
+    db.levels.where('projectId').equals(projectId).sortBy('sortOrder'),
+    db.areas.where('projectId').equals(projectId).sortBy('sortOrder'),
+    db.photos.where('projectId').equals(projectId).sortBy('sortOrder'),
+    db.measurements.where('projectId').equals(projectId).toArray(),
+    db.floorplans.where('projectId').equals(projectId).toArray(),
+    db.hotspots.where('projectId').equals(projectId).toArray(),
+  ]);
+  const photos = storedPhotos.map(loadPhoto);
+  const floorplans = storedFloorplans.map(loadFloorplan);
 
   const bundle: ProjectBundle = {
     format: 'ploskowscan',
@@ -35,16 +55,49 @@ export async function exportProject(projectId: string): Promise<File> {
 
   const zip = new JSZip();
   zip.file(MANIFEST, JSON.stringify(bundle, null, 2));
-  for (const photo of photos)
-    zip.file(
-      `medien/fotos/${photo.id}.${extensionFor(photo.blob)}`,
-      photo.blob,
-    );
-  for (const plan of floorplans)
-    zip.file(
-      `medien/grundrisse/${plan.id}.${extensionFor(plan.blob)}`,
-      plan.blob,
-    );
+  for (const photo of photos) {
+    let media: Blob;
+    try {
+      media = await durableBlob(photo.blob);
+    } catch {
+      const recovered = await recoverRenderedImage(
+        `photo:${photo.id}`,
+        photo.blob.type,
+      );
+      if (!recovered)
+        throw new Error(
+          `Das Foto „${photo.title}“ ist in Safari nicht mehr direkt lesbar. ` +
+            'Öffne zuerst den Bereich, in dem das Bild sichtbar ist, und starte dort den Export erneut.',
+        );
+      media = recovered;
+      await db.photos.update(photo.id, {
+        ...(await mediaBytes(media)),
+        blob: undefined,
+      });
+    }
+    zip.file(`medien/fotos/${photo.id}.${extensionFor(media)}`, media);
+  }
+  for (const plan of floorplans) {
+    let media: Blob;
+    try {
+      media = await durableBlob(plan.blob);
+    } catch {
+      const recovered = await recoverRenderedImage(
+        `floorplan:${plan.id}`,
+        plan.blob.type,
+      );
+      if (!recovered)
+        throw new Error(
+          'Ein Grundriss ist in Safari nicht mehr direkt lesbar. Zeige ihn an und starte den Export erneut.',
+        );
+      media = recovered;
+      await db.floorplans.update(plan.id, {
+        ...(await mediaBytes(media)),
+        blob: undefined,
+      });
+    }
+    zip.file(`medien/grundrisse/${plan.id}.${extensionFor(media)}`, media);
+  }
 
   const blob = await zip.generateAsync({
     type: 'blob',
@@ -116,9 +169,11 @@ export async function importProject(file: File): Promise<string> {
       await db.projects.put(bundle.project);
       await db.levels.bulkPut(bundle.levels);
       await db.areas.bulkPut(bundle.areas);
-      await db.photos.bulkPut(photos);
+      await db.photos.bulkPut(await Promise.all(photos.map(storePhoto)));
       await db.measurements.bulkPut(bundle.measurements);
-      await db.floorplans.bulkPut(floorplans);
+      await db.floorplans.bulkPut(
+        await Promise.all(floorplans.map(storeFloorplan)),
+      );
       await db.hotspots.bulkPut(bundle.hotspots);
     },
   );

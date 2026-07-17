@@ -3,11 +3,13 @@
     blob,
     alt = '',
     class: className = '',
+    mediaId,
     onload,
   }: {
     blob: Blob;
     alt?: string;
     class?: string;
+    mediaId?: string;
     onload?: (event: Event) => void;
   } = $props();
   let url = $derived(URL.createObjectURL(blob));
@@ -23,4 +25,4 @@
   });
 </script>
 
-<img src={url} {alt} class={className} {onload} />
+<img src={url} {alt} class={className} data-media-id={mediaId} {onload} />

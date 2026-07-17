@@ -136,7 +136,11 @@
         aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >
         <div class="photo-editor" bind:this={editor}>
-          <BlobImage blob={photo.blob} alt={photo.title} />
+          <BlobImage
+            blob={photo.blob}
+            alt={photo.title}
+            mediaId={`photo:${photo.id}`}
+          />
           <svg
             class="annotation-layer"
             viewBox="0 0 100 100"

@@ -1,12 +1,11 @@
 import Dexie, { type EntityTable } from 'dexie';
 
+import type { StoredFloorplan, StoredPhoto } from '@/lib/db/media';
 import type {
   Area,
-  Floorplan,
   FloorplanHotspot,
   Level,
   Measurement,
-  Photo,
   Project,
 } from '@/lib/types/project';
 
@@ -14,9 +13,9 @@ class PloskowScanDatabase extends Dexie {
   projects!: EntityTable<Project, 'id'>;
   levels!: EntityTable<Level, 'id'>;
   areas!: EntityTable<Area, 'id'>;
-  photos!: EntityTable<Photo, 'id'>;
+  photos!: EntityTable<StoredPhoto, 'id'>;
   measurements!: EntityTable<Measurement, 'id'>;
-  floorplans!: EntityTable<Floorplan, 'id'>;
+  floorplans!: EntityTable<StoredFloorplan, 'id'>;
   hotspots!: EntityTable<FloorplanHotspot, 'id'>;
 
   constructor() {
