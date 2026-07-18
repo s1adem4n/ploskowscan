@@ -397,6 +397,13 @@ input::placeholder {
 .measure-line {
   stroke: #f4d35e;
 }
+.measure-hit {
+  pointer-events: stroke;
+  cursor: pointer;
+  stroke: transparent;
+  stroke-width: 16px;
+  vector-effect: non-scaling-stroke;
+}
 .draft-line {
   stroke: white;
   stroke-dasharray: 7 5;
@@ -408,7 +415,11 @@ input::placeholder {
   @apply bg-white;
 }
 .measure-label {
+  cursor: pointer;
   @apply absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-[#f4d35e] bg-ink/90 px-2 py-1 text-sm leading-tight font-bold text-white shadow-lg;
+}
+.measure-label.selected {
+  @apply ring-2 ring-white/80;
 }
 .measure-label small {
   @apply mt-0.5 block text-[10px] font-normal text-white/70;
@@ -455,10 +466,18 @@ input::placeholder {
 .measure-list h3 {
   @apply mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase;
 }
-.measure-list > div {
+.measure-list > div,
+.measure-list-item {
   @apply flex items-center gap-2 border-b border-white/8 py-2;
 }
-.measure-list > div > span {
+.measure-list-item {
+  @apply w-full cursor-pointer rounded border-x-0 border-t-0 bg-transparent px-2 text-left text-white;
+}
+.measure-list-item:hover {
+  @apply bg-white/8;
+}
+.measure-list > div > span,
+.measure-list-item > span {
   @apply min-w-0 flex-1;
 }
 .measure-list strong,

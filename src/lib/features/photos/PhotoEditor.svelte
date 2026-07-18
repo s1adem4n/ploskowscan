@@ -17,8 +17,14 @@
   let viewport = $state<HTMLElement>();
   let editor = $state<HTMLElement>();
   let panzoom = $state<PanzoomController>();
+  let selectedMeasurementId = $state<string | null>(null);
   let measurements = $derived(
     appState.measurements.filter((item) => item.photoId === photo.id),
+  );
+  let visibleMeasurements = $derived(
+    selectedMeasurementId
+      ? measurements.filter((item) => item.id === selectedMeasurementId)
+      : measurements,
   );
 
   $effect(() => {
@@ -29,14 +35,25 @@
   });
 
   $effect(() => {
-    if (!appState.editing) {
+    if (appState.editing) {
+      selectedMeasurementId = null;
+    } else {
       firstPoint = null;
       secondPoint = null;
     }
   });
 
   function setPoint(event: PointerEvent) {
-    if (!appState.editing) return;
+    if (!appState.editing) {
+      const measurement = (event.target as Element).closest('.measure-hit');
+      const measurementId = measurement?.getAttribute('data-measurement');
+      if (measurementId) {
+        selectMeasurement(measurementId);
+      } else if (!(event.target as Element).closest('[data-measurement]')) {
+        selectedMeasurementId = null;
+      }
+      return;
+    }
     if ((event.target as Element).closest('[data-measurement]')) return;
     if (!editor) return;
     const rect = editor.getBoundingClientRect();
@@ -87,6 +104,11 @@
   async function remove(id: string) {
     await db.measurements.delete(id);
     await appState.load();
+  }
+
+  function selectMeasurement(id: string) {
+    if (appState.editing) return;
+    selectedMeasurementId = selectedMeasurementId === id ? null : id;
   }
 
   function labelPosition(item: Pick<Measurement, 'start' | 'end'>): Point {
@@ -147,7 +169,7 @@
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            {#each measurements as item (item.id)}
+            {#each visibleMeasurements as item (item.id)}
               <line
                 x1={item.start.x * 100}
                 y1={item.start.y * 100}
@@ -155,6 +177,14 @@
                 y2={item.end.y * 100}
                 class="measure-line"
               />
+              {#if !appState.editing}<line
+                  data-measurement={item.id}
+                  x1={item.start.x * 100}
+                  y1={item.start.y * 100}
+                  x2={item.end.x * 100}
+                  y2={item.end.y * 100}
+                  class="measure-hit"
+                />{/if}
             {/each}
             {#if firstPoint && secondPoint}
               <line
@@ -166,7 +196,7 @@
               />
             {/if}
           </svg>
-          {#each measurements as item (item.id)}
+          {#each visibleMeasurements as item (item.id)}
             {const position = $derived(labelPosition(item))}
             <span
               class="measure-dot"
@@ -176,13 +206,16 @@
               class="measure-dot"
               style={`left:${item.end.x * 100}%;top:${item.end.y * 100}%`}
             ></span>
-            <div
+            <button
+              type="button"
               data-measurement
               class="measure-label"
+              class:selected={selectedMeasurementId === item.id}
               style={`left:${position.x * 100}%;top:${position.y * 100}%`}
+              onclick={() => selectMeasurement(item.id)}
             >
               {item.value}{#if item.note}<small>{item.note}</small>{/if}
-            </div>
+            </button>
           {/each}
           {#if firstPoint}<span
               class="measure-dot draft"
@@ -248,20 +281,34 @@
       {#if measurements.length}
         <div class:view-only={!appState.editing} class="measure-list">
           <h3>Maße</h3>
-          {#each measurements as item (item.id)}
-            <div>
-              <span>
-                <strong>{item.value}</strong>
-                {#if item.note}<small>{item.note}</small>{/if}
-              </span>
-              {#if appState.editing}<button
+          {#each visibleMeasurements as item (item.id)}
+            {#if appState.editing}
+              <div>
+                <span>
+                  <strong>{item.value}</strong>
+                  {#if item.note}<small>{item.note}</small>{/if}
+                </span>
+                <button
                   class="icon-button danger"
                   onclick={() => remove(item.id)}
                   aria-label="Maß löschen"
                 >
                   <Icon name="trash" size={17} />
-                </button>{/if}
-            </div>
+                </button>
+              </div>
+            {:else}
+              <button
+                type="button"
+                data-measurement
+                class="measure-list-item"
+                onclick={() => selectMeasurement(item.id)}
+              >
+                <span>
+                  <strong>{item.value}</strong>
+                  {#if item.note}<small>{item.note}</small>{/if}
+                </span>
+              </button>
+            {/if}
           {/each}
         </div>
       {:else if !appState.editing}
