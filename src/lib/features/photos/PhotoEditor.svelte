@@ -18,6 +18,7 @@
   let editor = $state<HTMLElement>();
   let panzoom = $state<PanzoomController>();
   let selectedMeasurementId = $state<string | null>(null);
+  let measurementsHidden = $state(false);
   let measurements = $derived(
     appState.measurements.filter((item) => item.photoId === photo.id),
   );
@@ -25,6 +26,9 @@
     selectedMeasurementId
       ? measurements.filter((item) => item.id === selectedMeasurementId)
       : measurements,
+  );
+  let displayedMeasurements = $derived(
+    measurementsHidden ? [] : visibleMeasurements,
   );
 
   $effect(() => {
@@ -38,6 +42,7 @@
     if (appState.editing) {
       selectedMeasurementId = null;
     } else {
+      measurementsHidden = false;
       firstPoint = null;
       secondPoint = null;
     }
@@ -138,6 +143,14 @@
     >
       {appState.editing ? 'Bearbeiten beenden' : 'Bearbeiten'}
     </button>
+    {#if appState.editing}<button
+        class:active={measurementsHidden}
+        class="editor-measure-toggle"
+        onclick={() => (measurementsHidden = !measurementsHidden)}
+        aria-pressed={measurementsHidden}
+      >
+        {measurementsHidden ? 'Maße einblenden' : 'Maße ausblenden'}
+      </button>{/if}
     <div class="zoom-controls" aria-label="Bildzoom">
       <button onclick={() => panzoom?.zoomOut()} aria-label="Verkleinern">
         −
@@ -169,7 +182,7 @@
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            {#each visibleMeasurements as item (item.id)}
+            {#each displayedMeasurements as item (item.id)}
               <line
                 x1={item.start.x * 100}
                 y1={item.start.y * 100}
@@ -196,7 +209,7 @@
               />
             {/if}
           </svg>
-          {#each visibleMeasurements as item (item.id)}
+          {#each displayedMeasurements as item (item.id)}
             {const position = $derived(labelPosition(item))}
             <span
               class="measure-dot"

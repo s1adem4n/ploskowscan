@@ -363,11 +363,14 @@ input::placeholder {
 .zoom-controls button:hover {
   @apply bg-white/10;
 }
-.editor-edit-toggle {
+.editor-edit-toggle,
+.editor-measure-toggle {
   @apply min-h-9 rounded-lg border border-white/20 bg-transparent px-3 text-sm font-semibold text-white;
 }
 .editor-edit-toggle:hover,
-.editor-edit-toggle.active {
+.editor-edit-toggle.active,
+.editor-measure-toggle:hover,
+.editor-measure-toggle.active {
   @apply bg-white/10;
 }
 .editor-workspace {
