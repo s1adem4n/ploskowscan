@@ -67,6 +67,27 @@ export async function touchProject(projectId: string): Promise<void> {
   await db.projects.update(projectId, { updatedAt: now() });
 }
 
+export async function deleteArea(area: Area): Promise<void> {
+  await db.transaction(
+    'rw',
+    [db.projects, db.areas, db.photos, db.measurements, db.hotspots],
+    async () => {
+      const photoIds = await db.photos
+        .where('areaId')
+        .equals(area.id)
+        .primaryKeys();
+
+      if (photoIds.length) {
+        await db.measurements.where('photoId').anyOf(photoIds).delete();
+      }
+      await db.hotspots.where('areaId').equals(area.id).delete();
+      await db.photos.where('areaId').equals(area.id).delete();
+      await db.areas.delete(area.id);
+      await db.projects.update(area.projectId, { updatedAt: now() });
+    },
+  );
+}
+
 export async function deleteProject(projectId: string): Promise<void> {
   await db.transaction(
     'rw',

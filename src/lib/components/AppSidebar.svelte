@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from '@/lib/components/Icon.svelte';
+  import { deleteArea } from '@/lib/db/projects';
   import { appState } from '@/lib/state/app.svelte';
   let {
     addLevel,
@@ -10,6 +11,13 @@
     addArea: () => void;
     close?: () => void;
   } = $props();
+
+  async function removeArea(area: (typeof appState.areas)[number]) {
+    if (!confirm(`Bereich „${area.name}“ samt Fotos und Maßen löschen?`))
+      return;
+    await deleteArea(area);
+    await appState.load();
+  }
 </script>
 
 <aside class="sidebar">
@@ -47,20 +55,31 @@
           {#if level.id === appState.levelId}
             <div class="area-list">
               {#each appState.levelAreas as area (area.id)}
-                <button
-                  class:current={appState.view === 'area' &&
-                    area.id === appState.areaId}
-                  onclick={() => {
-                    appState.selectArea(area.id);
-                    close?.();
-                  }}
-                >
-                  <span
-                    class="area-dot"
-                    class:outside={area.kind === 'outside'}
-                  ></span>
-                  {area.name}<Icon name="chevron" size={15} />
-                </button>
+                <div class="area-row">
+                  <button
+                    class:current={appState.view === 'area' &&
+                      area.id === appState.areaId}
+                    class="area-button"
+                    onclick={() => {
+                      appState.selectArea(area.id);
+                      close?.();
+                    }}
+                  >
+                    <span
+                      class="area-dot"
+                      class:outside={area.kind === 'outside'}
+                    ></span>
+                    {area.name}<Icon name="chevron" size={15} />
+                  </button>
+                  {#if appState.editing}<button
+                      class="delete-area"
+                      onclick={() => removeArea(area)}
+                      aria-label={`„${area.name}“ löschen`}
+                      title="Bereich löschen"
+                    >
+                      <Icon name="trash" size={15} />
+                    </button>{/if}
+                </div>
               {/each}
               {#if appState.editing}<button class="add-row" onclick={addArea}>
                   <Icon name="plus" size={16} /> Bereich

@@ -142,18 +142,32 @@ select:focus-visible {
 .area-list {
   @apply mb-2 ml-3 border-l border-line py-1 pl-2;
 }
-.area-list button {
+.area-list .area-button,
+.area-list .add-row {
   @apply flex min-h-10 w-full items-center gap-2 rounded-md border-0 bg-transparent px-2 text-left text-sm text-muted;
 }
-.area-list button svg {
+.area-list .area-button svg {
   @apply ml-auto;
 }
-.area-list button:hover,
-.area-list button.current {
+.area-list .area-button:hover,
+.area-list .area-button.current {
   @apply bg-canvas text-ink;
 }
-.area-list button.current {
+.area-list .area-button.current {
   @apply font-semibold;
+}
+.area-row {
+  @apply flex items-center;
+}
+.area-row .area-button {
+  @apply min-w-0 flex-1;
+}
+.area-row .delete-area {
+  @apply grid size-9 shrink-0 place-items-center rounded-md border-0 bg-transparent p-0 text-muted;
+}
+.area-row .delete-area:hover {
+  @apply bg-[#fbe9e7];
+  color: #a4332d;
 }
 .area-dot {
   @apply size-2 rounded-full bg-[#78958a];
