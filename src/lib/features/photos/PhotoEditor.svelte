@@ -173,7 +173,7 @@
       <div
         class="panzoom-viewport"
         bind:this={viewport}
-        style={`--annotation-scale:${1 / zoomScale}`}
+        style={`--annotation-scale:${1 / zoomScale};--measure-stroke-width:${Math.max(1, 3 / zoomScale)}px`}
         role="application"
         aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >

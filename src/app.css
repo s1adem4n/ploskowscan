@@ -408,7 +408,7 @@ input::placeholder {
 .measure-line,
 .draft-line {
   vector-effect: non-scaling-stroke;
-  stroke-width: 3px;
+  stroke-width: var(--measure-stroke-width, 3px);
 }
 .measure-line {
   stroke: #f4d35e;
