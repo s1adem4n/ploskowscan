@@ -173,14 +173,11 @@
       <div
         class="panzoom-viewport"
         bind:this={viewport}
+        style={`--annotation-scale:${1 / zoomScale}`}
         role="application"
         aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >
-        <div
-          class="photo-editor"
-          bind:this={editor}
-          style={`--annotation-scale:${1 / zoomScale}`}
-        >
+        <div class="photo-editor" bind:this={editor}>
           <BlobImage
             blob={photo.blob}
             alt={photo.title}
