@@ -16,9 +16,8 @@
   let error = $state('');
   let viewport = $state<HTMLElement>();
   let editor = $state<HTMLElement>();
+  let annotationOverlay = $state<HTMLElement>();
   let panzoom = $state<PanzoomController>();
-  let zoomScale = $state(1);
-  let annotationBounds = $state({ left: 0, top: 0, width: 0, height: 0 });
   let selectedMeasurementId = $state<string | null>(null);
   let measurementsHidden = $state(false);
   let measurements = $derived(
@@ -34,24 +33,21 @@
   );
 
   $effect(() => {
-    if (!viewport || !editor) return;
-    let frame = 0;
+    if (!viewport || !editor || !annotationOverlay) return;
     let currentScale = 1;
     const syncAnnotations = (scale?: number) => {
       if (scale !== undefined) currentScale = scale;
-      zoomScale = currentScale;
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!viewport || !editor) return;
-        const viewportRect = viewport.getBoundingClientRect();
-        const editorRect = editor.getBoundingClientRect();
-        annotationBounds = {
-          left: editorRect.left - viewportRect.left,
-          top: editorRect.top - viewportRect.top,
-          width: editorRect.width,
-          height: editorRect.height,
-        };
-      });
+      if (!viewport || !editor || !annotationOverlay) return;
+      const viewportRect = viewport.getBoundingClientRect();
+      const editorRect = editor.getBoundingClientRect();
+      annotationOverlay.style.left = `${editorRect.left - viewportRect.left}px`;
+      annotationOverlay.style.top = `${editorRect.top - viewportRect.top}px`;
+      annotationOverlay.style.width = `${editorRect.width}px`;
+      annotationOverlay.style.height = `${editorRect.height}px`;
+      annotationOverlay.style.setProperty(
+        '--measure-stroke-width',
+        `${Math.max(2, 3 / Math.sqrt(currentScale))}px`,
+      );
     };
     const controller = createPanzoom(
       viewport,
@@ -65,7 +61,6 @@
     syncAnnotations();
     panzoom = controller;
     return () => {
-      cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       controller.destroy();
     };
@@ -210,10 +205,7 @@
             mediaId={`photo:${photo.id}`}
           />
         </div>
-        <div
-          class="annotation-overlay"
-          style={`left:${annotationBounds.left}px;top:${annotationBounds.top}px;width:${annotationBounds.width}px;height:${annotationBounds.height}px;--measure-stroke-width:${Math.max(1, 3 / zoomScale)}px`}
-        >
+        <div class="annotation-overlay" bind:this={annotationOverlay}>
           <svg
             class="annotation-layer"
             viewBox="0 0 100 100"
