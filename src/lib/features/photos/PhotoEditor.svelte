@@ -17,6 +17,7 @@
   let viewport = $state<HTMLElement>();
   let editor = $state<HTMLElement>();
   let panzoom = $state<PanzoomController>();
+  let zoomScale = $state(1);
   let selectedMeasurementId = $state<string | null>(null);
   let measurementsHidden = $state(false);
   let measurements = $derived(
@@ -33,7 +34,12 @@
 
   $effect(() => {
     if (!viewport || !editor) return;
-    const controller = createPanzoom(viewport, editor, setPoint);
+    const controller = createPanzoom(
+      viewport,
+      editor,
+      setPoint,
+      (scale) => (zoomScale = scale),
+    );
     panzoom = controller;
     return () => controller.destroy();
   });
@@ -170,7 +176,11 @@
         role="application"
         aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >
-        <div class="photo-editor" bind:this={editor}>
+        <div
+          class="photo-editor"
+          bind:this={editor}
+          style={`--annotation-scale:${1 / zoomScale}`}
+        >
           <BlobImage
             blob={photo.blob}
             alt={photo.title}

@@ -425,14 +425,16 @@ input::placeholder {
   stroke-dasharray: 7 5;
 }
 .measure-dot {
-  @apply pointer-events-none absolute z-10 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-ink bg-[#f4d35e] shadow-sm;
+  @apply pointer-events-none absolute z-10 size-3 rounded-full border-2 border-ink bg-[#f4d35e] shadow-sm;
+  transform: translate(-50%, -50%) scale(var(--annotation-scale, 1));
 }
 .measure-dot.draft {
   @apply bg-white;
 }
 .measure-label {
   cursor: pointer;
-  @apply absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border-2 border-[#f4d35e] bg-ink/90 px-2 py-1 text-sm leading-tight font-bold text-white shadow-lg;
+  @apply absolute z-10 rounded-md border-2 border-[#f4d35e] bg-ink/90 px-2 py-1 text-sm leading-tight font-bold text-white shadow-lg;
+  transform: translate(-50%, -50%) scale(var(--annotation-scale, 1));
 }
 .measure-label.selected {
   @apply ring-2 ring-white/80;
