@@ -12,6 +12,7 @@ import type { ProjectBundle } from '@/lib/types/project';
 import {
   durableBlob,
   extensionFor,
+  optimizePhotoForExport,
   recoverRenderedImage,
   safeFilename,
 } from '@/lib/utils/files';
@@ -76,7 +77,8 @@ export async function exportProject(projectId: string): Promise<File> {
         blob: undefined,
       });
     }
-    zip.file(`medien/fotos/${photo.id}.${extensionFor(media)}`, media);
+    const optimized = await optimizePhotoForExport(media);
+    zip.file(`medien/fotos/${photo.id}.${extensionFor(optimized)}`, optimized);
   }
   for (const plan of floorplans) {
     let media: Blob;

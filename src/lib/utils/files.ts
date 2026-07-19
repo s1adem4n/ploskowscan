@@ -40,6 +40,63 @@ export async function recoverRenderedImage(
   ).then((blob) => blob ?? undefined);
 }
 
+const EXPORT_PHOTO_MAX_EDGE = 2560;
+const EXPORT_PHOTO_QUALITY = 0.85;
+
+export async function optimizePhotoForExport(source: Blob): Promise<Blob> {
+  const type = await detectedImageType(source);
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(type)) return source;
+
+  const typedSource =
+    source.type === type ? source : new Blob([source], { type });
+  const url = URL.createObjectURL(typedSource);
+  try {
+    const image = new Image();
+    image.src = url;
+    await image.decode();
+
+    const scale = Math.min(
+      1,
+      EXPORT_PHOTO_MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
+    );
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const context = canvas.getContext('2d');
+    if (!context) return typedSource;
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const outputType = type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const optimized = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, outputType, EXPORT_PHOTO_QUALITY),
+    );
+    return optimized && optimized.size < typedSource.size
+      ? optimized
+      : typedSource;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function detectedImageType(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff)
+    return 'image/jpeg';
+  if (
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47
+  )
+    return 'image/png';
+  if (
+    String.fromCharCode(...bytes.subarray(0, 4)) === 'RIFF' &&
+    String.fromCharCode(...bytes.subarray(8, 12)) === 'WEBP'
+  )
+    return 'image/webp';
+  return blob.type;
+}
+
 export function extensionFor(blob: Blob): string {
   const extensions: Record<string, string> = {
     'image/jpeg': 'jpg',
