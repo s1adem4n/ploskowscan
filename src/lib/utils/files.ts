@@ -55,10 +55,10 @@ export async function optimizePhotoForExport(source: Blob): Promise<Blob> {
     image.src = url;
     await image.decode();
 
-    const scale = Math.min(
-      1,
-      EXPORT_PHOTO_MAX_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
-    );
+    const longestEdge = Math.max(image.naturalWidth, image.naturalHeight);
+    if (longestEdge <= EXPORT_PHOTO_MAX_EDGE) return typedSource;
+
+    const scale = Math.min(1, EXPORT_PHOTO_MAX_EDGE / longestEdge);
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(image.naturalWidth * scale);
     canvas.height = Math.round(image.naturalHeight * scale);
