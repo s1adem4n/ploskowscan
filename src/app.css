@@ -132,8 +132,21 @@ select:focus-visible {
 .level-block {
   @apply px-2;
 }
+.level-row {
+  @apply flex items-center;
+}
 .level-button {
   @apply flex min-h-11 w-full items-center justify-between rounded-lg border-0 bg-transparent px-3 text-left text-sm font-semibold;
+}
+.level-row .level-button {
+  @apply min-w-0 flex-1;
+}
+.level-row .delete-level {
+  @apply grid size-9 shrink-0 place-items-center rounded-md border-0 bg-transparent p-0 text-muted;
+}
+.level-row .delete-level:hover {
+  @apply bg-[#fbe9e7];
+  color: #a4332d;
 }
 .level-button:hover,
 .level-button.current {

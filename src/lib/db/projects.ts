@@ -88,6 +88,56 @@ export async function deleteArea(area: Area): Promise<void> {
   );
 }
 
+export async function deleteLevel(level: Level): Promise<void> {
+  await db.transaction(
+    'rw',
+    [
+      db.projects,
+      db.levels,
+      db.areas,
+      db.photos,
+      db.measurements,
+      db.floorplans,
+      db.hotspots,
+    ],
+    async () => {
+      const areaIds = await db.areas
+        .where('levelId')
+        .equals(level.id)
+        .primaryKeys();
+      const photoIds = areaIds.length
+        ? await db.photos.where('areaId').anyOf(areaIds).primaryKeys()
+        : [];
+      const floorplan = await db.floorplans
+        .where('levelId')
+        .equals(level.id)
+        .first();
+
+      if (photoIds.length) {
+        await db.measurements.where('photoId').anyOf(photoIds).delete();
+      }
+      if (areaIds.length) {
+        await db.hotspots.where('areaId').anyOf(areaIds).delete();
+        await db.photos.where('areaId').anyOf(areaIds).delete();
+        await db.areas.where('id').anyOf(areaIds).delete();
+      }
+      if (floorplan) {
+        await db.hotspots.where('floorplanId').equals(floorplan.id).delete();
+        await db.floorplans.delete(floorplan.id);
+      }
+      await db.levels.delete(level.id);
+
+      const remainingLevels = await db.levels
+        .where('projectId')
+        .equals(level.projectId)
+        .sortBy('sortOrder');
+      remainingLevels.forEach((item, index) => (item.sortOrder = index));
+      if (remainingLevels.length) await db.levels.bulkPut(remainingLevels);
+      await db.projects.update(level.projectId, { updatedAt: now() });
+    },
+  );
+}
+
 export async function deleteProject(projectId: string): Promise<void> {
   await db.transaction(
     'rw',

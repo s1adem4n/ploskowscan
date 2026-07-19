@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from '@/lib/components/Icon.svelte';
-  import { deleteArea } from '@/lib/db/projects';
+  import { deleteArea, deleteLevel } from '@/lib/db/projects';
   import { appState } from '@/lib/state/app.svelte';
   let {
     addLevel,
@@ -16,6 +16,17 @@
     if (!confirm(`Bereich „${area.name}“ samt Fotos und Maßen löschen?`))
       return;
     await deleteArea(area);
+    await appState.load();
+  }
+
+  async function removeLevel(level: (typeof appState.levels)[number]) {
+    if (
+      !confirm(
+        `Geschoss „${level.name}“ samt Bereichen, Fotos, Maßen und Grundriss löschen?`,
+      )
+    )
+      return;
+    await deleteLevel(level);
     await appState.load();
   }
 </script>
@@ -40,18 +51,28 @@
     <nav class="project-nav" aria-label="Projekt">
       {#each appState.projectLevels as level (level.id)}
         <div class="level-block">
-          <button
-            class:current={level.id === appState.levelId &&
-              appState.view === 'floorplan'}
-            class="level-button"
-            onclick={() => {
-              appState.selectLevel(level.id);
-              close?.();
-            }}
-          >
-            <span>{level.name}</span>
-            <Icon name="floorplan" size={17} />
-          </button>
+          <div class="level-row">
+            <button
+              class:current={level.id === appState.levelId &&
+                appState.view === 'floorplan'}
+              class="level-button"
+              onclick={() => {
+                appState.selectLevel(level.id);
+                close?.();
+              }}
+            >
+              <span>{level.name}</span>
+              <Icon name="floorplan" size={17} />
+            </button>
+            {#if appState.editing}<button
+                class="delete-level"
+                onclick={() => removeLevel(level)}
+                aria-label={`Geschoss „${level.name}“ löschen`}
+                title="Geschoss löschen"
+              >
+                <Icon name="trash" size={15} />
+              </button>{/if}
+          </div>
           {#if level.id === appState.levelId}
             <div class="area-list">
               {#each appState.levelAreas as area (area.id)}
