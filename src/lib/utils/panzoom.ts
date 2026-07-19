@@ -11,7 +11,7 @@ export function createPanzoom(
   viewport: HTMLElement,
   content: HTMLElement,
   onTap: (event: PointerEvent) => void,
-  onScaleChange?: (scale: number) => void,
+  onTransformChange?: (scale: number) => void,
 ): PanzoomController {
   const pointers = new Map<number, { x: number; y: number }>();
   let moved = false;
@@ -47,9 +47,9 @@ export function createPanzoom(
     if (pointers.size === 0) moved = false;
   };
   const wheel = (event: WheelEvent) => instance.zoomWithWheel(event);
-  const scaleChange = (event: Event) => {
+  const transformChange = (event: Event) => {
     const { scale } = (event as CustomEvent<{ scale: number }>).detail;
-    onScaleChange?.(scale);
+    onTransformChange?.(scale);
   };
 
   viewport.addEventListener('pointerdown', pointerDown, true);
@@ -57,8 +57,8 @@ export function createPanzoom(
   viewport.addEventListener('pointerup', pointerUp, true);
   viewport.addEventListener('pointercancel', pointerCancel, true);
   viewport.addEventListener('wheel', wheel, { passive: false });
-  content.addEventListener('panzoomchange', scaleChange);
-  onScaleChange?.(instance.getScale());
+  content.addEventListener('panzoomchange', transformChange);
+  onTransformChange?.(instance.getScale());
 
   return {
     zoomIn: () => instance.zoomIn({ animate: false }),
@@ -70,7 +70,7 @@ export function createPanzoom(
       viewport.removeEventListener('pointerup', pointerUp, true);
       viewport.removeEventListener('pointercancel', pointerCancel, true);
       viewport.removeEventListener('wheel', wheel);
-      content.removeEventListener('panzoomchange', scaleChange);
+      content.removeEventListener('panzoomchange', transformChange);
       instance.destroy();
     },
   };

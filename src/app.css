@@ -393,7 +393,7 @@ input::placeholder {
   @apply min-w-0 flex-1 overflow-hidden p-5;
 }
 .panzoom-viewport {
-  @apply grid size-full touch-none place-items-center overflow-hidden;
+  @apply relative grid size-full touch-none place-items-center overflow-hidden;
 }
 .photo-editor {
   @apply relative max-h-full w-fit max-w-full touch-none select-none;
@@ -401,6 +401,10 @@ input::placeholder {
 }
 .photo-editor > img {
   @apply block max-h-[calc(100dvh-6.5rem)] max-w-full object-contain;
+}
+.annotation-overlay {
+  @apply pointer-events-none absolute;
+  line-height: 0;
 }
 .annotation-layer {
   @apply pointer-events-none absolute inset-0 size-full overflow-visible;
@@ -426,15 +430,16 @@ input::placeholder {
 }
 .measure-dot {
   @apply pointer-events-none absolute z-10 size-3 rounded-full border-2 border-ink bg-[#f4d35e] shadow-sm;
-  transform: translate(-50%, -50%) scale(var(--annotation-scale, 1));
+  transform: translate(-50%, -50%);
 }
 .measure-dot.draft {
   @apply bg-white;
 }
 .measure-label {
+  pointer-events: auto;
   cursor: pointer;
   @apply absolute z-10 rounded-md border-2 border-[#f4d35e] bg-ink/90 px-2 py-1 text-sm leading-tight font-bold text-white shadow-lg;
-  transform: translate(-50%, -50%) scale(var(--annotation-scale, 1));
+  transform: translate(-50%, -50%);
 }
 .measure-label.selected {
   @apply ring-2 ring-white/80;

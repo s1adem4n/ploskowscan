@@ -18,6 +18,7 @@
   let editor = $state<HTMLElement>();
   let panzoom = $state<PanzoomController>();
   let zoomScale = $state(1);
+  let annotationBounds = $state({ left: 0, top: 0, width: 0, height: 0 });
   let selectedMeasurementId = $state<string | null>(null);
   let measurementsHidden = $state(false);
   let measurements = $derived(
@@ -34,14 +35,40 @@
 
   $effect(() => {
     if (!viewport || !editor) return;
+    let frame = 0;
+    let currentScale = 1;
+    const syncAnnotations = (scale?: number) => {
+      if (scale !== undefined) currentScale = scale;
+      zoomScale = currentScale;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!viewport || !editor) return;
+        const viewportRect = viewport.getBoundingClientRect();
+        const editorRect = editor.getBoundingClientRect();
+        annotationBounds = {
+          left: editorRect.left - viewportRect.left,
+          top: editorRect.top - viewportRect.top,
+          width: editorRect.width,
+          height: editorRect.height,
+        };
+      });
+    };
     const controller = createPanzoom(
       viewport,
       editor,
       setPoint,
-      (scale) => (zoomScale = scale),
+      syncAnnotations,
     );
+    const resizeObserver = new ResizeObserver(() => syncAnnotations());
+    resizeObserver.observe(viewport);
+    resizeObserver.observe(editor);
+    syncAnnotations();
     panzoom = controller;
-    return () => controller.destroy();
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+      controller.destroy();
+    };
   });
 
   $effect(() => {
@@ -173,7 +200,6 @@
       <div
         class="panzoom-viewport"
         bind:this={viewport}
-        style={`--annotation-scale:${1 / zoomScale};--measure-stroke-width:${Math.max(1, 3 / zoomScale)}px`}
         role="application"
         aria-label="Zoombares Foto zum Einzeichnen von Maßen"
       >
@@ -183,6 +209,11 @@
             alt={photo.title}
             mediaId={`photo:${photo.id}`}
           />
+        </div>
+        <div
+          class="annotation-overlay"
+          style={`left:${annotationBounds.left}px;top:${annotationBounds.top}px;width:${annotationBounds.width}px;height:${annotationBounds.height}px;--measure-stroke-width:${Math.max(1, 3 / zoomScale)}px`}
+        >
           <svg
             class="annotation-layer"
             viewBox="0 0 100 100"
@@ -229,7 +260,7 @@
             <button
               type="button"
               data-measurement
-              class="measure-label"
+              class="measure-label panzoom-exclude"
               class:selected={selectedMeasurementId === item.id}
               style={`left:${position.x * 100}%;top:${position.y * 100}%`}
               onclick={() => selectMeasurement(item.id)}
